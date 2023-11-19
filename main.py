@@ -2,6 +2,7 @@ import json
 from typing import Dict, List
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import redis
@@ -51,11 +52,18 @@ async def request_classification(request: Request):
     image_id = form.image_id
     model_id = form.model_id
     classification_scores = classify_image(model_id=model_id, img_id=image_id)
+    out = json.dumps(classification_scores)
+    with open("out.json", "w") as outfile:
+        outfile.write(out)
     return templates.TemplateResponse(
         "classification_output.html",
         {
             "request": request,
             "image_id": image_id,
-            "classification_scores": json.dumps(classification_scores),
+            "classification_scores": out,
         },
     )
+# Download JSON file containing prediction output
+@app.get("/outputJSON")
+def outputJSON():
+    return FileResponse(path="out.json", filename="out.json", media_type='text/json')
