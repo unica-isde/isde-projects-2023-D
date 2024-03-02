@@ -10,6 +10,8 @@ from rq.job import Job
 from app.config import Configuration
 from app.forms.classification_form import ClassificationForm
 from app.ml.classification_utils import classify_image, upload_image
+from app.forms.histogram_form import HistogramForm
+from app.ml.classification_utils import classify_image
 from app.utils import list_images
 
 
@@ -84,5 +86,23 @@ async def handle_form(
             "request": request,
             "file_name": image_id.filename,
             "classification_scores": json.dumps(classification_scores),
+
+@app.get("/histograms")
+def create_histogram(request: Request):
+    return templates.TemplateResponse(
+        "histogram_select.html",
+        {"request": request, "images": list_images()},
+    )
+
+@app.post("/histograms")
+async def request_histogram(request: Request):
+    form = HistogramForm(request)
+    await form.load_data()
+    image_id = form.image_id
+    return templates.TemplateResponse(
+        "histogram_output.html",
+        {
+            "request": request,
+            "image_id": image_id,
         },
     )
