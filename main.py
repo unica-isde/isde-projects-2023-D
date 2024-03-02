@@ -1,6 +1,6 @@
 import json
 from typing import Dict, List
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, File, UploadFile, Form
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -9,12 +9,14 @@ from rq import Connection, Queue
 from rq.job import Job
 from app.config import Configuration
 from app.forms.classification_form import ClassificationForm
-from app.ml.classification_utils import classify_image
+from app.ml.classification_utils import classify_image, upload_image
 from app.utils import list_images
 
 
 app = FastAPI()
 config = Configuration()
+
+IMAGEDIR = "images/"
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
@@ -56,6 +58,31 @@ async def request_classification(request: Request):
         {
             "request": request,
             "image_id": image_id,
+            "classification_scores": json.dumps(classification_scores),
+        },
+    )
+
+
+@app.get("/uploadImage")
+async def upload_classify(request: Request):
+    return templates.TemplateResponse(
+        "upload_select.html",
+        {"request": request, "models": Configuration.models},
+    )
+
+
+@app.post("/classifyUpload")
+async def handle_form(
+    request: Request, model_id: str = Form(...), image_id: UploadFile = File(...)
+):
+
+    classification_scores = upload_image(model_id=model_id, image_id=image_id)
+
+    return templates.TemplateResponse(
+        "upload_output.html",
+        {
+            "request": request,
+            "file_name": image_id.filename,
             "classification_scores": json.dumps(classification_scores),
         },
     )
