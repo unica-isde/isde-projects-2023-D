@@ -73,7 +73,7 @@ async def request_classification(request: Request):
 # Download JSON file containing prediction output
 @app.get("/outputJSON")
 def output_json():
-    return FileResponse(path="out.json", filename="out.json", media_type='text/json')
+    return FileResponse(path="app/static/output/json/out.json", filename="out.json", media_type='text/json')
 
 
 # Download Image file containing plot
