@@ -12,6 +12,7 @@ from app.forms.classification_form import ClassificationForm
 from app.ml.classification_utils import classify_image, upload_image
 from app.forms.histogram_form import HistogramForm
 from app.ml.classification_utils import classify_image
+from app.histogram.histogram import calculate_histogram, get_image_path
 from app.utils import list_images
 
 
@@ -101,10 +102,12 @@ async def request_histogram(request: Request):
     form = HistogramForm(request)
     await form.load_data()
     image_id = form.image_id
+    histogram_data = calculate_histogram(get_image_path(image_id))
     return templates.TemplateResponse(
         "histogram_output.html",
         {
             "request": request,
             "image_id": image_id,
+            "histogram_data": histogram_data
         },
     )
