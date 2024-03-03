@@ -38,14 +38,18 @@ function makeHistogram(data) {
         },
         options: {
             scales: {
-                y: {
-                    display: false,
-                    beginAtZero: true,
-                    max: maxHistogramValue
-                },
-                x: {
-                    display: false
-                },
+                yAxes: [{
+                    ticks: {
+                        display: false,
+                        beginAtZero: true,
+                        max: maxHistogramValue
+                    }
+                }],
+                xAxes: [{
+                    ticks: {
+                        display: false
+                    }    
+                }],
             },
             plugins: {
                 legend: {
