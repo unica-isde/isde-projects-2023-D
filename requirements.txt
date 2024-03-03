@@ -1,0 +1,9 @@
+fastapi[all]
+torch
+torchvision
+requests
+Pillow
+redis
+rq
+python-multipart
+opencv-python
