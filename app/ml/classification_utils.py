@@ -25,7 +25,7 @@ def fetch_image(image_id):
     img = Image.open(image_path)
     return img
 
-
+#comment
 def get_labels():
     """Returns the labels of Imagenet dataset as a list, where
     the index of the list corresponds to the output class."""
