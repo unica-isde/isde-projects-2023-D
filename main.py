@@ -86,6 +86,8 @@ async def handle_form(
             "request": request,
             "file_name": image_id.filename,
             "classification_scores": json.dumps(classification_scores),
+        }
+    )
 
 @app.get("/histograms")
 def create_histogram(request: Request):

@@ -98,7 +98,12 @@ def upload_image(model_id, image_id):
     model specified in model_id when it is fed with the
     image corresponding to image_id."""
     try:
-        destination_path = os.path.join("app/static/images/", image_id.filename)
+        folder_path = "app/static/images/"
+        # Check if the folder exists
+        if not os.path.exists(folder_path):
+        # If it doesn't exist, create it
+            os.makedirs(folder_path)
+        destination_path = os.path.join(folder_path, image_id.filename)
         with open(destination_path, "wb") as buffer:
             shutil.copyfileobj(image_id.file, buffer)
         img = Image.open(destination_path)
