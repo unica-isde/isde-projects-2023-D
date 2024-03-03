@@ -1,7 +1,7 @@
 import json
 import os
 from typing import Dict, List
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, File, UploadFile, Form
 from fastapi.responses import HTMLResponse
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -11,13 +11,18 @@ from rq import Connection, Queue
 from rq.job import Job
 from app.config import Configuration
 from app.forms.classification_form import ClassificationForm
+from app.ml.classification_utils import classify_image, upload_image
+from app.forms.histogram_form import HistogramForm
 from app.ml.classification_utils import classify_image
+from app.histogram.histogram import calculate_histogram, get_image_path
 from app.utils import list_images
 import matplotlib.pyplot as plt
 
 
 app = FastAPI()
 config = Configuration()
+
+IMAGEDIR = "images/"
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
@@ -70,6 +75,7 @@ async def request_classification(request: Request):
             "classification_scores": out,
         },
     )
+
 # Download JSON file containing prediction output
 @app.get("/outputJSON")
 def output_json():
@@ -97,3 +103,51 @@ def output_png():
         plt.savefig('app/static/output/png/img.png')
         plt.clf()
         return FileResponse(path="app/static/output/png/img.png", filename="img.png", media_type='image/png')
+
+
+
+@app.get("/uploadImage")
+async def upload_classify(request: Request):
+    return templates.TemplateResponse(
+        "upload_select.html",
+        {"request": request, "models": Configuration.models},
+    )
+
+
+@app.post("/classifyUpload")
+async def handle_form(
+    request: Request, model_id: str = Form(...), image_id: UploadFile = File(...)
+):
+
+    classification_scores = upload_image(model_id=model_id, image_id=image_id)
+
+    return templates.TemplateResponse(
+        "upload_output.html",
+        {
+            "request": request,
+            "file_name": image_id.filename,
+            "classification_scores": json.dumps(classification_scores),
+        }
+    )
+
+@app.get("/histograms")
+def create_histogram(request: Request):
+    return templates.TemplateResponse(
+        "histogram_select.html",
+        {"request": request, "images": list_images()},
+    )
+
+@app.post("/histograms")
+async def request_histogram(request: Request):
+    form = HistogramForm(request)
+    await form.load_data()
+    image_id = form.image_id
+    histogram_data = calculate_histogram(get_image_path(image_id))
+    return templates.TemplateResponse(
+        "histogram_output.html",
+        {
+            "request": request,
+            "image_id": image_id,
+            "histogram_data": histogram_data
+        },
+    )
