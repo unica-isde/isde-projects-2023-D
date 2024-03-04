@@ -14,3 +14,4 @@ class Configuration:
         "vgg16",
         "inception_v3",
     )
+

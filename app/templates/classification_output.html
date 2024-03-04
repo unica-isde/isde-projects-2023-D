@@ -10,10 +10,18 @@
             display: block;
             margin: 0 auto;
         }
-
     </style>
     <div class="row">
         <div class="col">
+            <h5>The transformed image </h5>
+            <div class="card">
+                <img class="large-front-thumbnail"
+                     src="{{ 'static/transformed_image/'+filename}} "
+                     alt={{ filename }}/>
+            </div>
+        </div>
+        <div class="col">
+            <h5>The original  image </h5>
             <div class="card">
                 <img class="large-front-thumbnail"
                      src="{{ 'static/imagenet_subset/'+image_id }} "

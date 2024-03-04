@@ -16,7 +16,7 @@ from app.config import Configuration
 conf = Configuration()
 
 
-def fetch_image(image_id):
+def fetch_image(image_id: object) -> object:
     """Gets the image from the specified ID. It returns only images
     downloaded in the folder specified in the configuration object."""
     image_path = os.path.join(conf.image_folder_path, image_id)
@@ -45,7 +45,6 @@ def get_model(model_id):
             logging.error("Model {} not found".format(model_id))
     else:
         raise ImportError
-
 
 def classify_image(model_id, img_id):
     """Returns the top-5 classification score output from the
