@@ -22,12 +22,7 @@ class ClassificationForm:
         self.sharpness = form.get("sharpness")
         self.contrast = form.get("contrast")
         self.brightness = form.get("brightness")
-        # print(self.color)
-        # print(self.brightness)
-        # print(self.sharpness)
-        # print(self.contrast)
 
-    @property
     def is_valid(self):
         if not self.image_id or not isinstance(self.image_id, str):
             self.errors.append("A valid image id is required")

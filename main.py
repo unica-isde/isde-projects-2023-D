@@ -34,7 +34,7 @@ def info() -> Dict[str, List[str]]:
     the list of available image files."""
     list_of_images = list_images()
     list_of_models = Configuration.models
-    data = {"models": list_of_models, "images": list_of_images, }
+    data = {"models": list_of_models, "images": list_of_images }
     return data
 
 
