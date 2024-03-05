@@ -2,11 +2,13 @@
 This is a simple classification service. It accepts an url of an
 image and returns the top-5 classification labels and scores.
 """
+
 import importlib
 import json
 import logging
 import os
 import torch
+import shutil
 from PIL import Image
 from torchvision import transforms
 
@@ -23,7 +25,7 @@ def fetch_image(image_id: object) -> object:
     img = Image.open(image_path)
     return img
 
-
+#comment
 def get_labels():
     """Returns the labels of Imagenet dataset as a list, where
     the index of the list corresponds to the output class."""
@@ -50,7 +52,13 @@ def classify_image(model_id, img_id):
     """Returns the top-5 classification score output from the
     model specified in model_id when it is fed with the
     image corresponding to img_id."""
-    img = fetch_image(img_id)
+
+    # if the user uploads an image, the fetch_image is not necessary
+    if isinstance(img_id, str):
+        img = fetch_image(img_id)
+    else:
+        img = img_id
+
     model = get_model(model_id)
     model.eval()
     transform = transforms.Compose(
@@ -82,3 +90,24 @@ def classify_image(model_id, img_id):
 
     img.close()
     return output
+
+
+def upload_image(model_id, image_id):
+    """Returns the top-5 classification score output from the
+    model specified in model_id when it is fed with the
+    image corresponding to image_id."""
+    try:
+        folder_path = "app/static/images/"
+        # Check if the folder exists
+        if not os.path.exists(folder_path):
+        # If it doesn't exist, create it
+            os.makedirs(folder_path)
+        destination_path = os.path.join(folder_path, image_id.filename)
+        with open(destination_path, "wb") as buffer:
+            shutil.copyfileobj(image_id.file, buffer)
+        img = Image.open(destination_path)
+        classification_scores = classify_image(model_id=model_id, img_id=img)
+
+        return classification_scores
+    except:
+        print("Upload Error")

@@ -10,22 +10,13 @@
             display: block;
             margin: 0 auto;
         }
+
     </style>
     <div class="row">
         <div class="col">
-            <h5>The transformed image </h5>
             <div class="card">
                 <img class="large-front-thumbnail"
-                     src="{{ 'static/transformed_image/'+filename}} "
-                     alt={{ filename }}/>
-            </div>
-        </div>
-        <div class="col">
-            <h5>The original  image </h5>
-            <div class="card">
-                <img class="large-front-thumbnail"
-                     src="{{ 'static/imagenet_subset/'+image_id }} "
-                     alt={{ image_id }}/>
+                     src="static/images/{{ file_name }}"/>
             </div>
         </div>
         <div class="col">
@@ -37,12 +28,9 @@
                         </div>
                     </div>
                 </div>
-                <a class="btn btn-primary" href="/classifications" role="button">Back</a>
-                <a class="btn btn-success ml-3" href="/outputJSON">Download Results</a>
-                <a class="btn btn-success ml-3" href="/outputPNG">Download Plot</a>
+                <a class="btn btn-primary" href="/uploadImage" role="button">Back</a>
         </div>
     </div>
     <script src="{{ "static/graph.js" }}" id="makeGraph" classification_scores="{{classification_scores}}"></script>
-
 {% endblock %}
 
