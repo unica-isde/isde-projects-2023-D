@@ -16,8 +16,8 @@ from app.forms.histogram_form import HistogramForm
 from app.ml.classification_utils import classify_image
 from app.histogram.histogram import calculate_histogram, get_image_path
 from app.utils import list_images
+from app.transformations.transfomation_utils import transform_image, save_transformed
 import matplotlib.pyplot as plt
-
 
 app = FastAPI()
 config = Configuration()
@@ -34,7 +34,7 @@ def info() -> Dict[str, List[str]]:
     the list of available image files."""
     list_of_images = list_images()
     list_of_models = Configuration.models
-    data = {"models": list_of_models, "images": list_of_images}
+    data = {"models": list_of_models, "images": list_of_images }
     return data
 
 
@@ -63,15 +63,26 @@ async def request_classification(request: Request):
     await form.load_data()
     image_id = form.image_id
     model_id = form.model_id
+
+    color = form.color
+    brightness = form.brightness
+    contrast = form.contrast
+    sharpness = form.sharpness
+
+    classification_scores = classify_image(model_id=model_id, img_id=image_id, )
+    enhanced_image = transform_image(image_id, color, brightness, sharpness, contrast)
+    save_transformed(enhanced_image)
     classification_scores = classify_image(model_id=model_id, img_id=image_id)
     out = json.dumps(classification_scores)
     with open("app/static/output/json/out.json", "w") as outfile:
         outfile.write(out)
+
     return templates.TemplateResponse(
         "classification_output.html",
         {
             "request": request,
             "image_id": image_id,
+            "filename": "enhanced_image.jpg",
             "classification_scores": out,
         },
     )
@@ -115,9 +126,7 @@ async def upload_classify(request: Request):
 
 
 @app.post("/classifyUpload")
-async def handle_form(
-    request: Request, model_id: str = Form(...), image_id: UploadFile = File(...)
-):
+async def handle_form(request: Request, model_id: str = Form(...), image_id: UploadFile = File(...)):
 
     classification_scores = upload_image(model_id=model_id, image_id=image_id)
 

@@ -11,7 +11,7 @@
             <select name="model_id">
                 {% for model in models %}
                   <option value="{{ model }}" SELECTED>{{ model }}</option>
-                {% endfor %}     
+                {% endfor %}
               </select>
         </p>
         <h4>
@@ -21,9 +21,50 @@
             <select name="image_id">
                 {% for image in images %}
                   <option value="{{ image }}" SELECTED>{{ image }}</option>
-                {% endfor %}     
+                {% endfor %}
               </select>
         </p>
+        <h4>
+            Set parameters:
+        </h4>
+        <p>
+            <button type="button" class="btn btn-dark mb" data-toggle="modal" data-target="#exempleModal1">
+    <i class="mdi mdi-plus-circle-outline"></i> Adjust parameters
+  </button>
+  <div class="modal fade" id="exempleModal1" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Adjust parameters </h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+           <div class="form-group">
+              <label for="color">Color</label>
+              <input type="text" class="form-control" name="color" id="color"  placeholder="1.0" >
+            </div>
+           <div class="form-group">
+              <label for="brightness">brightness</label>
+              <input type="text" class="form-control" name="brightness" id="brightness"  placeholder="1.0">
+            </div>
+           <div class="form-group">
+              <label for="contrast">contrast</label>
+              <input type="text" class="form-control" name="contrast" id="contrast" placeholder="1.0">
+            </div>
+            <div class="form-group">
+              <label for="sharpness">sharpness</label>
+              <input type="text" class="form-control" name="sharpness" id="sharpness" placeholder="1.0">
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-dark mb-2" data-dismiss="modal">Exit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</p>
         <button type="submit" class="btn btn-dark mb-2">Submit</button>
     </form>
 {% endblock %}
