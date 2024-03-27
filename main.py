@@ -1,7 +1,7 @@
 import json
 import os
 from typing import Dict, List
-from fastapi import FastAPI, Request, File, UploadFile, Form
+from fastapi import FastAPI, Request, File, UploadFile, Form, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -105,12 +105,19 @@ async def request_transform(request: Request):
     contrast = form.contrast
     sharpness = form.sharpness
 
-    enhanced_image = transform_image(image_id, color, brightness, sharpness, contrast)
+    try:
+        enhanced_image = transform_image(image_id, color, brightness, sharpness, contrast)
+    
+        # Transforming the Image into a byte array to pass it to the frontend without saving it
+        image_url = convert_image(img=enhanced_image)
+    except Exception as exception:
+        # If something goes wrong during image transformation
+        error = f"Error: {str(exception)}"
+        print(error)
+        raise HTTPException(status_code=500, detail=error)
+
     # Classification on the transformed image
     classification_scores = classify_image(model_id=model_id, img_id=enhanced_image)
-    
-    # Transforming the Image into a byte array to pass it to the frontend without saving it
-    image_url = convert_image(img=enhanced_image)
 
     out = json.dumps(classification_scores)
     with open("app/static/output/json/out.json", "w") as outfile:
