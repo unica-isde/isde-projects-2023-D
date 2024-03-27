@@ -1,8 +1,8 @@
 from app.ml.classification_utils import fetch_image
 from PIL import ImageEnhance, Image
 from PIL.ImageEnhance import Color, Brightness, Sharpness, Contrast
-import os
-import shutil
+from io import BytesIO
+import base64
 
 
 def transform_image(image_id, color, brightness, sharpness, contrast):
@@ -31,16 +31,16 @@ def transform_image(image_id, color, brightness, sharpness, contrast):
     return enhanced_image
 
 
-def save_transformed(enhanced_image: Image):
-    try:
-        folder_path = "app/static/transformed_image/"
-        # Check if the folder exists
-        if not os.path.exists(folder_path):
-            # If it doesn't exist, create it
-            os.makedirs(folder_path)
-        destination_path = os.path.join(folder_path, "enhanced_image.jpg")
-        enhanced_image.save(destination_path)
+def convert_image(img):
+    """
+    Converts an Image to a Byte array to pass it to the frontend
+    without saving it.
+    """
+    img_byte_array = BytesIO()
+    img.save(img_byte_array, format='PNG')
+    img_byte_array.seek(0)
+    image_64 = base64.b64encode(img_byte_array.getvalue()).decode("utf-8")
+    image_url = f"data:image/png;base64,{image_64}"
 
-    except:
-        print('saving error')
+    return image_url
 

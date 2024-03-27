@@ -53,7 +53,7 @@ def classify_image(model_id, img_id):
     model specified in model_id when it is fed with the
     image corresponding to img_id."""
 
-    # if the user uploads an image, the fetch_image is not necessary
+    # if the user uploads an image or if it is an Enhanced image, the fetch_image is not necessary
     if isinstance(img_id, str):
         img = fetch_image(img_id)
     else:

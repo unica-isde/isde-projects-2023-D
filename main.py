@@ -11,12 +11,13 @@ from rq import Connection, Queue
 from rq.job import Job
 from app.config import Configuration
 from app.forms.classification_form import ClassificationForm
+from app.forms.transformation_form import TransformationForm
 from app.ml.classification_utils import classify_image, upload_image
 from app.forms.histogram_form import HistogramForm
 from app.ml.classification_utils import classify_image
 from app.histogram.histogram import calculate_histogram, get_image_path
 from app.utils import list_images
-from app.transformations.transfomation_utils import transform_image, save_transformed
+from app.transformations.transfomation_utils import transform_image, convert_image
 import matplotlib.pyplot as plt
 
 app = FastAPI()
@@ -64,15 +65,8 @@ async def request_classification(request: Request):
     image_id = form.image_id
     model_id = form.model_id
 
-    color = form.color
-    brightness = form.brightness
-    contrast = form.contrast
-    sharpness = form.sharpness
-
     classification_scores = classify_image(model_id=model_id, img_id=image_id, )
-    enhanced_image = transform_image(image_id, color, brightness, sharpness, contrast)
-    save_transformed(enhanced_image)
-    classification_scores = classify_image(model_id=model_id, img_id=image_id)
+
     out = json.dumps(classification_scores)
     with open("app/static/output/json/out.json", "w") as outfile:
         outfile.write(out)
@@ -82,7 +76,52 @@ async def request_classification(request: Request):
         {
             "request": request,
             "image_id": image_id,
-            "filename": "enhanced_image.jpg",
+            "classification_scores": out,
+        },
+    )
+
+@app.get("/classify_transform")
+def create_transform(request: Request):
+    return templates.TemplateResponse(
+        "transformation_select.html",
+        {"request": request, "images": list_images(), "models": Configuration.models},
+    )
+
+@app.post("/classify_transform")
+async def request_transform(request: Request):
+    folder_path = "app/static/output/json/"
+    # Check if the folder exists
+    if not os.path.exists(folder_path):
+        # If it doesn't exist, create it
+        os.makedirs(folder_path)
+
+    form = TransformationForm(request)
+    await form.load_data()
+    
+    image_id = form.image_id
+    model_id = form.model_id
+    color = form.color
+    brightness = form.brightness
+    contrast = form.contrast
+    sharpness = form.sharpness
+
+    enhanced_image = transform_image(image_id, color, brightness, sharpness, contrast)
+    # Classification on the transformed image
+    classification_scores = classify_image(model_id=model_id, img_id=enhanced_image)
+    
+    # Transforming the Image into a byte array to pass it to the frontend without saving it
+    image_url = convert_image(img=enhanced_image)
+
+    out = json.dumps(classification_scores)
+    with open("app/static/output/json/out.json", "w") as outfile:
+        outfile.write(out)
+
+    return templates.TemplateResponse(
+        "transformation_output.html",
+        {
+            "request": request,
+            "image_id": image_id,
+            "img_url": image_url,
             "classification_scores": out,
         },
     )
