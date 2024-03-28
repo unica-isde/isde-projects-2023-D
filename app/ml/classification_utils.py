@@ -8,8 +8,10 @@ import json
 import logging
 import os
 import torch
-import shutil
+from io import BytesIO
 from PIL import Image
+import base64
+import imghdr
 from torchvision import transforms
 
 from app.config import Configuration
@@ -25,7 +27,8 @@ def fetch_image(image_id):
     img = Image.open(image_path)
     return img
 
-#comment
+
+# comment
 def get_labels():
     """Returns the labels of Imagenet dataset as a list, where
     the index of the list corresponds to the output class."""
@@ -47,6 +50,7 @@ def get_model(model_id):
             logging.error("Model {} not found".format(model_id))
     else:
         raise ImportError
+
 
 def classify_image(model_id, img_id):
     """Returns the top-5 classification score output from the
@@ -92,22 +96,30 @@ def classify_image(model_id, img_id):
     return output
 
 
-def upload_image(model_id, image_id):
-    """Returns the top-5 classification score output from the
-    model specified in model_id when it is fed with the
-    image corresponding to image_id."""
+def check_errors(image_id):
+    """
+    Raises an exception if the parameter is not an Image
+    """
     try:
-        folder_path = "app/static/images/"
-        # Check if the folder exists
-        if not os.path.exists(folder_path):
-        # If it doesn't exist, create it
-            os.makedirs(folder_path)
-        destination_path = os.path.join(folder_path, image_id.filename)
-        with open(destination_path, "wb") as buffer:
-            shutil.copyfileobj(image_id.file, buffer)
-        img = Image.open(destination_path)
-        classification_scores = classify_image(model_id=model_id, img_id=img)
+        image_type = imghdr.what(None, h=image_id.file.read(2048))
+        image_id.file.seek(0)  # Reset file pointer
 
-        return classification_scores
-    except:
-        print("Upload Error")
+        if not image_type:
+            raise ValueError("Invalid image format. Please upload a valid image file.")
+    except Exception as e:
+        raise ValueError(f"Upload Error: {e}")
+
+
+def convert_UploadFile(content):
+    """
+    Converts UploadFile.read() to a PIL Image and then to a Byte array to pass it to the frontend
+    without saving it.
+    """
+    image_bytes = BytesIO(content)
+    img = Image.open(image_bytes)
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    image_64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    img_url = f"data:image/png;base64,{image_64}"
+
+    return (img, img_url)

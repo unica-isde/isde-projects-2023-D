@@ -22,4 +22,7 @@
         </p>
         <button type="submit" class="btn btn-dark mb-2">Submit</button>
     </form>
+    {% if error_message %}
+        <p style="color: red;">Error: {{ error_message }}</p>
+    {% endif %}
 {% endblock %}

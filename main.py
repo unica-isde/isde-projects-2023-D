@@ -12,9 +12,8 @@ from rq.job import Job
 from app.config import Configuration
 from app.forms.classification_form import ClassificationForm
 from app.forms.transformation_form import TransformationForm
-from app.ml.classification_utils import classify_image, upload_image
+from app.ml.classification_utils import classify_image, check_errors, convert_UploadFile
 from app.forms.histogram_form import HistogramForm
-from app.ml.classification_utils import classify_image
 from app.histogram.histogram import calculate_histogram, get_image_path
 from app.utils import list_images
 from app.transformations.transfomation_utils import transform_image, convert_image
@@ -35,7 +34,7 @@ def info() -> Dict[str, List[str]]:
     the list of available image files."""
     list_of_images = list_images()
     list_of_models = Configuration.models
-    data = {"models": list_of_models, "images": list_of_images }
+    data = {"models": list_of_models, "images": list_of_images}
     return data
 
 
@@ -65,7 +64,10 @@ async def request_classification(request: Request):
     image_id = form.image_id
     model_id = form.model_id
 
-    classification_scores = classify_image(model_id=model_id, img_id=image_id, )
+    classification_scores = classify_image(
+        model_id=model_id,
+        img_id=image_id,
+    )
 
     out = json.dumps(classification_scores)
     with open("app/static/output/json/out.json", "w") as outfile:
@@ -80,12 +82,14 @@ async def request_classification(request: Request):
         },
     )
 
+
 @app.get("/classify_transform")
 def create_transform(request: Request):
     return templates.TemplateResponse(
         "transformation_select.html",
         {"request": request, "images": list_images(), "models": Configuration.models},
     )
+
 
 @app.post("/classify_transform")
 async def request_transform(request: Request):
@@ -97,7 +101,7 @@ async def request_transform(request: Request):
 
     form = TransformationForm(request)
     await form.load_data()
-    
+
     image_id = form.image_id
     model_id = form.model_id
     color = form.color
@@ -106,8 +110,10 @@ async def request_transform(request: Request):
     sharpness = form.sharpness
 
     try:
-        enhanced_image = transform_image(image_id, color, brightness, sharpness, contrast)
-    
+        enhanced_image = transform_image(
+            image_id, color, brightness, sharpness, contrast
+        )
+
         # Transforming the Image into a byte array to pass it to the frontend without saving it
         image_url = convert_image(img=enhanced_image)
     except Exception as exception:
@@ -133,10 +139,15 @@ async def request_transform(request: Request):
         },
     )
 
+
 # Download JSON file containing prediction output
 @app.get("/outputJSON")
 def output_json():
-    return FileResponse(path="app/static/output/json/out.json", filename="out.json", media_type='text/json')
+    return FileResponse(
+        path="app/static/output/json/out.json",
+        filename="out.json",
+        media_type="text/json",
+    )
 
 
 # Download Image file containing plot
@@ -157,10 +168,13 @@ def output_png():
         # setting label of x-axis
         plt.xlabel("X")
         plt.title("Prediction")
-        plt.savefig('app/static/output/png/img.png')
+        plt.savefig("app/static/output/png/img.png")
         plt.clf()
-        return FileResponse(path="app/static/output/png/img.png", filename="img.png", media_type='image/png')
-
+        return FileResponse(
+            path="app/static/output/png/img.png",
+            filename="img.png",
+            media_type="image/png",
+        )
 
 
 @app.get("/uploadImage")
@@ -172,18 +186,40 @@ async def upload_classify(request: Request):
 
 
 @app.post("/classifyUpload")
-async def handle_form(request: Request, model_id: str = Form(...), image_id: UploadFile = File(...)):
+async def handle_form(
+    request: Request, model_id: str = Form(...), image_id: UploadFile = File(...)
+):
 
-    classification_scores = upload_image(model_id=model_id, image_id=image_id)
+    try:
+        check_errors(image_id)
 
-    return templates.TemplateResponse(
-        "upload_output.html",
-        {
-            "request": request,
-            "file_name": image_id.filename,
-            "classification_scores": json.dumps(classification_scores),
-        }
-    )
+        image_id.file.seek(0)
+        content = await image_id.read()
+
+        img, img_url = convert_UploadFile(content=content)
+
+        classification_scores = classify_image(model_id=model_id, img_id=img)
+
+        return templates.TemplateResponse(
+            "upload_output.html",
+            {
+                "request": request,
+                "image_HTML": img_url,
+                "classification_scores": json.dumps(classification_scores),
+            },
+        )
+    except ValueError as e:
+        # Handle invalid image format error
+        error_message = str(e)
+        return templates.TemplateResponse(
+            "upload_select.html",
+            {
+                "request": request,
+                "models": Configuration.models,
+                "error_message": error_message,
+            },
+        )
+
 
 @app.get("/histograms")
 def create_histogram(request: Request):
@@ -191,6 +227,7 @@ def create_histogram(request: Request):
         "histogram_select.html",
         {"request": request, "images": list_images()},
     )
+
 
 @app.post("/histograms")
 async def request_histogram(request: Request):
@@ -200,9 +237,5 @@ async def request_histogram(request: Request):
     histogram_data = calculate_histogram(get_image_path(image_id))
     return templates.TemplateResponse(
         "histogram_output.html",
-        {
-            "request": request,
-            "image_id": image_id,
-            "histogram_data": histogram_data
-        },
+        {"request": request, "image_id": image_id, "histogram_data": histogram_data},
     )

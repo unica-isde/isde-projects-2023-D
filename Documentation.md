@@ -32,4 +32,9 @@ Add description here
 
 ## Issue #4 - Upload Image Button
 
-Add description here
+To solve this issue we created a new route "/uploadImage". The GET request it renders the "upload_select.html" where the user chooses the model he wants to use to classify the image and where he can browse to his local files and upload an image that he wants to clissify.
+After the "Submit" button is pressed, a new route "/classifyUpload" with POST method checks if the file selected is an image through the check_errors(image) function.
+If the selected file is not an image, an exception is raised, the "upload_select.html" file is rendered again and the user gets notified that he selected a wrong file.
+If the selected file is indeed an image, the UploadFile image is transformed into a bytes array so that it can be returned to the frontend and the image can be shown without saving it.
+Then the "classify_image" function is called to classify the uploaded image.
+At last the "upload_output.html" is rendered, the image and the plot are shown to the user. 
