@@ -2,18 +2,8 @@
 
 {% block content %}
 
-    <h1>Select Model and Image</h1>
+    <h1>Select Image</h1>
     <form method="post" novalidate>
-        <h4>
-            Model:
-        </h4>
-        <p>
-            <select name="model_id">
-                {% for model in models %}
-                  <option value="{{ model }}" SELECTED>{{ model }}</option>
-                {% endfor %}
-              </select>
-        </p>
         <h4>
             Image:
         </h4>
@@ -21,7 +11,7 @@
             <select name="image_id">
                 {% for image in images %}
                   <option value="{{ image }}" SELECTED>{{ image }}</option>
-                {% endfor %}
+                {% endfor %}     
               </select>
         </p>
         <button type="submit" class="btn btn-dark mb-2">Submit</button>
