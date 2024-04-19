@@ -1,8 +1,10 @@
+from io import BytesIO
 import json
 import os
+from PIL import Image
 from typing import Dict, List
 from fastapi import FastAPI, Request, File, UploadFile, Form, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -54,11 +56,6 @@ def create_classify(request: Request):
 
 @app.post("/classifications")
 async def request_classification(request: Request):
-    folder_path = "app/static/output/json/"
-    # Check if the folder exists
-    if not os.path.exists(folder_path):
-        # If it doesn't exist, create it
-        os.makedirs(folder_path)
     form = ClassificationForm(request)
     await form.load_data()
     image_id = form.image_id
@@ -69,16 +66,12 @@ async def request_classification(request: Request):
         img_id=image_id,
     )
 
-    out = json.dumps(classification_scores)
-    with open("app/static/output/json/out.json", "w") as outfile:
-        outfile.write(out)
-
     return templates.TemplateResponse(
         "classification_output.html",
         {
             "request": request,
             "image_id": image_id,
-            "classification_scores": out,
+            "classification_scores": json.dumps(classification_scores)
         },
     )
 
@@ -125,9 +118,6 @@ async def request_transform(request: Request):
     # Classification on the transformed image
     classification_scores = classify_image(model_id=model_id, img_id=enhanced_image)
 
-    out = json.dumps(classification_scores)
-    with open("app/static/output/json/out.json", "w") as outfile:
-        outfile.write(out)
 
     return templates.TemplateResponse(
         "transformation_output.html",
@@ -135,47 +125,49 @@ async def request_transform(request: Request):
             "request": request,
             "image_id": image_id,
             "img_url": image_url,
-            "classification_scores": out,
+            "classification_scores": json.dumps(classification_scores),
         },
     )
 
 
 # Download JSON file containing prediction output
 @app.get("/outputJSON")
-def output_json():
-    return FileResponse(
-        path="app/static/output/json/out.json",
-        filename="out.json",
-        media_type="text/json",
-    )
+def output_json(classification_scores):
+    return JSONResponse(content=json.loads(classification_scores), media_type="application/json", headers={"Content-Disposition": "attachment; filename=output.json"})
+
 
 
 # Download Image file containing plot
-@app.get("/outputPNG")
-def output_png():
-    folder_path = "app/static/output/png/"
-    # Check if the folder exists
-    if not os.path.exists(folder_path):
-        # If it doesn't exist, create it
-        os.makedirs(folder_path)
-    with open("app/static/output/json/out.json") as json_file:
-        data = json.load(json_file)
-        x = [item[0] for item in data]
-        y = [item[1] for item in data]
-        plt.barh(x, y)
+@app.get("/outputPNG", response_class=StreamingResponse)
+async def output_png(classification_scores: str):
+    print("hello")
+    data = json.loads(classification_scores)
+    x = [item[0] for item in data]
+    y = [item[1] for item in data]
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.barh(x, y)
         # setting label of y-axis
-        plt.ylabel("Y")
+    ax.set_xlabel("Y")
         # setting label of x-axis
-        plt.xlabel("X")
-        plt.title("Prediction")
-        plt.savefig("app/static/output/png/img.png")
-        plt.clf()
-        return FileResponse(
-            path="app/static/output/png/img.png",
-            filename="img.png",
-            media_type="image/png",
-        )
+    ax.set_title("Prediction")
+    
+    # Save the plot in a buffer
+    img_buffer = BytesIO()
+    plt.savefig(img_buffer, format='png')
+    plt.close(fig)
 
+    # Take the plot from the buffer
+    img = Image.open(img_buffer)
+    img_byte = BytesIO()
+    img.save(img_byte, format='PNG')
+    img.close()
+    img_byte.seek(0)
+
+    return StreamingResponse(
+        content=img_byte,
+        media_type="image/png",
+        headers={"Content-Disposition": "attachment; filename=plot.png"}
+    )
 
 @app.get("/uploadImage")
 async def upload_classify(request: Request):

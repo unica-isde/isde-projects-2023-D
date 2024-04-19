@@ -30,8 +30,8 @@
                     </div>
                 </div>
                 <a class="btn btn-primary" href="/classifications" role="button">Back</a>
-                <a class="btn btn-success ml-3" href="/outputJSON">Download Results</a>
-                <a class="btn btn-success ml-3" href="/outputPNG">Download Plot</a>
+                <a class="btn btn-success ml-3" href="/outputJSON?classification_scores={{classification_scores}}" role="button">Download Results</a>
+                <a class="btn btn-success ml-3" href="/outputPNG?classification_scores={{classification_scores}}" role="button">Download Plot</a>
         </div>
     </div>
     <script src="{{ "static/graph.js" }}" id="makeGraph" classification_scores="{{classification_scores}}"></script>
