@@ -140,15 +140,14 @@ def output_json(classification_scores):
 # Download Image file containing plot
 @app.get("/outputPNG", response_class=StreamingResponse)
 async def output_png(classification_scores: str):
-    print("hello")
     data = json.loads(classification_scores)
     x = [item[0] for item in data]
     y = [item[1] for item in data]
     fig, ax = plt.subplots(figsize=(10, 6))
     ax.barh(x, y)
-        # setting label of y-axis
+    # setting label of y-axis
     ax.set_xlabel("Y")
-        # setting label of x-axis
+    # setting label of x-axis
     ax.set_title("Prediction")
     
     # Save the plot in a buffer

@@ -28,7 +28,8 @@ The "transform_image" function opens the image and applies the enhancements requ
 
 ## Issue #3 - Download Results Button
 
-Add description here
+In this issue two APIs are implemented, the first one is outputJSON (GET) which takes into input the classification scores object and then returns a JSONResponse object containing the classification values.
+The second API is outputPNG (GET) which is useful to have the png version of the plot downloaded locally, this is done by taking classification scores as a parameter to put in into a figure that plots the data using matplotlib and then Byte streams it to the frontend.
 
 ## Issue #4 - Upload Image Button
 
