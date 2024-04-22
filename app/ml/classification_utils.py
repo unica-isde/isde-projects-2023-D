@@ -2,12 +2,16 @@
 This is a simple classification service. It accepts an url of an
 image and returns the top-5 classification labels and scores.
 """
+
 import importlib
 import json
 import logging
 import os
 import torch
+from io import BytesIO
 from PIL import Image
+import base64
+import imghdr
 from torchvision import transforms
 
 from app.config import Configuration
@@ -24,6 +28,7 @@ def fetch_image(image_id):
     return img
 
 
+# comment
 def get_labels():
     """Returns the labels of Imagenet dataset as a list, where
     the index of the list corresponds to the output class."""
@@ -51,7 +56,13 @@ def classify_image(model_id, img_id):
     """Returns the top-5 classification score output from the
     model specified in model_id when it is fed with the
     image corresponding to img_id."""
-    img = fetch_image(img_id)
+
+    # if the user uploads an image or if it is an Enhanced image, the fetch_image is not necessary
+    if isinstance(img_id, str):
+        img = fetch_image(img_id)
+    else:
+        img = img_id
+
     model = get_model(model_id)
     model.eval()
     transform = transforms.Compose(
@@ -83,3 +94,32 @@ def classify_image(model_id, img_id):
 
     img.close()
     return output
+
+
+def check_errors(image_id):
+    """
+    Raises an exception if the parameter is not an Image
+    """
+    try:
+        image_type = imghdr.what(None, h=image_id.file.read(2048))
+        image_id.file.seek(0)  # Reset file pointer
+
+        if not image_type:
+            raise ValueError("Invalid image format. Please upload a valid image file.")
+    except Exception as e:
+        raise ValueError(f"Upload Error: {e}")
+
+
+def convert_UploadFile(content):
+    """
+    Converts UploadFile.read() to a PIL Image and then to a Byte array to pass it to the frontend
+    without saving it.
+    """
+    image_bytes = BytesIO(content)
+    img = Image.open(image_bytes)
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    image_64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    img_url = f"data:image/png;base64,{image_64}"
+
+    return (img, img_url)
